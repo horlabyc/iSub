@@ -3,29 +3,27 @@ package model
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// subscription_type_enum
-// status_enum
-
-// User has many CreditCards, UserID is the foreign key
 type User struct {
-	gorm.Model
-	Email         string `gorm:"Not Null" json:email`
-	Username      string `gorm:"Not Null" json:username`
-	Password      string `gorm:"Not Null" json:password`
-	Subscriptions []Subscription
+	Id        primitive.ObjectID `bson:"_id"`
+	Email     string             `bson:"email" validate:"required,email"`
+	Username  string             `bson:"username" validate:"required,min=2,max=100"`
+	Password  string             `bson:"password" validate:"required,min=6"`
+	CreatedAt string             `bson:"createdAt"`
+	UpdatedAt string             `bson:"updatedAt"`
+	UserId    string             `bson:"userId"`
 }
 
 type Subscription struct {
-	gorm.Model
-	Name             string    `gorm:"Not Null" json:name`
-	SubscriptionType string    `sql:"type:subscription_type_enum Not Null" json:"subscription_type"`
-	Status           string    `gorm:"type:status_enum Not Null" json:"status"`
-	LastRenewalDate  time.Time `gorm:"Not Null" json:last_renewal_date`
-	NextRenewalDate  time.Time `gorm:"Not Null" json:next_renewal_date`
-	Cost             string    `gorm:"Not Null" json:cost`
-	Currency         string    `gorm:"Not Null" json:currency`
-	UserID           uint
+	Id               primitive.ObjectID `bson:"_id"`
+	Name             string             `bson:"name" validate:"required"`
+	SubscriptionType string             `bson:"subscriptionType"`
+	Status           string             `bson:"status"`
+	LastRenewalDate  time.Time          `bson:"lastRenewalDate" validate:"required" `
+	NextRenewalDate  time.Time          `bson:nextRenewalDate validate:"required"`
+	Cost             string             `bson:"cost"`
+	Currency         string             `bson:"currency"`
+	UserID           primitive.ObjectID `bson:"_id"`
 }

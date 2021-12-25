@@ -3,23 +3,19 @@ package routes
 import (
 	controller "github.com/horlabyc/iSub/controllers"
 	validations "github.com/horlabyc/iSub/middlewares"
-	model "github.com/horlabyc/iSub/models"
-
-	"github.com/horlabyc/iSub/repository"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 )
 
-func RegisterUserRoutes(router gin.IRouter, db *gorm.DB) {
-	db.AutoMigrate(&model.User{})
+func RegisterUserRoutes(router gin.IRouter) {
 
-	userRepository := repository.NewUserRepository(db)
-	userHandler := controller.NewUserHandler(userRepository)
+	// userRepository := repository.NewUserRepository(db)
+	// userHandler := controller.NewUserHandler()
 
 	userRouter := router.Group("/users")
-	userRouter.GET("/", userHandler.GetAll)
-	userRouter.POST("/register", validations.RegisterValidator(), userHandler.Register)
+	// userRouter.GET("/", userHandler.GetAll)
+	userRouter.POST("/register", validations.RegisterValidator(), controller.Register())
+	userRouter.POST("/login", validations.LoginValidator(), controller.Login())
 }
 
 // func RegisterSubscriptionRoutes(router gin.IRouter, db *gorm.DB) {

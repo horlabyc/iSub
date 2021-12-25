@@ -1,13 +1,24 @@
 package repository
 
 import (
+	"context"
+	"log"
+	"time"
+
+	"github.com/horlabyc/iSub/database"
 	model "github.com/horlabyc/iSub/models"
 	"github.com/jinzhu/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserRepository struct {
 	database *gorm.DB
 }
+
+var UserCollection = database.OpenConnection(database.Client, "users")
 
 func NewUserRepository(database *gorm.DB) *UserRepository {
 	return &UserRepository{
@@ -15,15 +26,32 @@ func NewUserRepository(database *gorm.DB) *UserRepository {
 	}
 }
 
-func (repository UserRepository) CreateUser(user model.User) model.User {
-	// var newUser model.User
-	repository.database.Create(&user)
+func CreateUser(user model.User) model.User {
+	_, err := UserCollection.InsertOne(context.TODO(), user)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return user
 }
 
-func (repository UserRepository) Find(match map[string]interface{}) *gorm.DB {
+func FindOne(match bson.M) (model.User, error) {
 	var user model.User
-	return repository.database.Where(match).Find(&user)
+	var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return user, UserCollection.FindOne(ctx, match).Decode(&user)
+}
+
+func UpdateOne(filter bson.M, updateData primitive.D, options options.UpdateOptions) (*mongo.UpdateResult, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return UserCollection.UpdateOne(
+		ctx,
+		filter,
+		bson.D{
+			{"$set", updateData},
+		},
+		&options,
+	)
 }
 
 func (repository UserRepository) Login() []model.User {

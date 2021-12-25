@@ -8,13 +8,14 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type SignedDetails struct {
 	Email    string
 	Username string
-	UserId   uint
+	UserId   primitive.ObjectID
 	jwt.StandardClaims
 }
 
@@ -44,7 +45,7 @@ func ComparePasswordHash(password, hash string) (bool, string) {
 	return valid, errorMessage
 }
 
-func GenerateToken(username *string, email *string, userId *uint) (string, string) {
+func GenerateToken(username *string, email *string, userId *primitive.ObjectID) (string, string) {
 	tokenClaims := &SignedDetails{
 		UserId:   *userId,
 		Username: *username,
@@ -69,4 +70,15 @@ func GenerateToken(username *string, email *string, userId *uint) (string, strin
 		log.Panic(err)
 	}
 	return token, refreshToken
+}
+
+func VerifyPassword(hashedPassword string, password string) (bool, string) {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	valid := true
+	errorMsg := ""
+	if err != nil {
+		errorMsg = fmt.Sprintf("email or password is incorrect")
+		valid = false
+	}
+	return valid, errorMsg
 }
