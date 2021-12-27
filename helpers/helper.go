@@ -82,3 +82,22 @@ func VerifyPassword(hashedPassword string, password string) (bool, string) {
 	}
 	return valid, errorMsg
 }
+
+func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
+	token, err := jwt.ParseWithClaims(signedToken, &SignedDetails{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+	if err != nil {
+		msg = err.Error()
+	}
+	claims, ok := token.Claims.(*SignedDetails)
+	if !ok {
+		msg = fmt.Sprintf("provided token is invalid")
+		return nil, msg
+	}
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		msg = fmt.Sprintf("token is expired")
+		return nil, msg
+	}
+	return claims, msg
+}

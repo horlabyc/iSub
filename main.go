@@ -17,8 +17,7 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(cors.Default())
 
-	apiRoute := router.Group("/api")
-	routes.RegisterUserRoutes(apiRoute)
-	// routes.RegisterSubscriptionRoutes(apiRoute, database.DB)
+	mainRouter := router.Group("/isub")
+	routes.RegisterRoutes(mainRouter)
 	router.Run(":" + port)
 }

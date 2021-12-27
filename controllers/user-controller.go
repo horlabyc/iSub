@@ -1,30 +1,44 @@
 package controller
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	logic "github.com/horlabyc/iSub/logic"
+	"github.com/horlabyc/iSub/repository"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	model "github.com/horlabyc/iSub/models"
-	"github.com/horlabyc/iSub/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
-type UserHandler struct {
-	repository *repository.UserRepository
-}
-
-func NewUserHandler(repository *repository.UserRepository) *UserHandler {
-	return &UserHandler{
-		repository: repository,
+func GetUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId := c.Param("userId")
+		user, err := logic.GetUser(userId)
+		fmt.Println("error", err == mongo.ErrNoDocuments)
+		if err == mongo.ErrNoDocuments {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": "User does not exist"})
+			return
+		}
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": err})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "Ok", "data": map[string]interface{}{
+			"Id":        user.Id,
+			"Email":     user.Email,
+			"Username":  user.Username,
+			"CreatedAt": user.CreatedAt,
+		}})
 	}
-}
-
-func (handler UserHandler) GetAll(c *gin.Context) {
-	var users []model.User = handler.repository.FindAll()
-	c.JSON(200, gin.H{"status": "Ok", "data": users})
 }
 
 func Register() gin.HandlerFunc {
@@ -74,5 +88,44 @@ func Login() gin.HandlerFunc {
 				"refreshToken": refreshToken,
 			},
 		})
+	}
+}
+
+func GetAllUsers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil {
+			page = 1
+		}
+		limit, err := strconv.Atoi(c.Query("limit"))
+		if err != nil || limit < 1 {
+			limit = 15
+		}
+		skip := (page - 1) * limit
+		match := bson.D{{"$match", bson.D{{}}}}
+		group := bson.D{{"$group", bson.D{
+			{"_id", bson.D{{"_id", "null"}}},
+			{"total", bson.D{{"$sum", 1}}},
+			{"data", bson.D{{"$push", "$$ROOT"}}},
+		}}}
+		projectStage := bson.D{
+			{"$project", bson.D{
+				{"_id", 0},
+				{"totalCount", 1},
+				{"users", bson.D{{"$slice", []interface{}{"$data", skip, limit}}}},
+			}},
+		}
+		result, err := repository.FindAllUsers(match, group, projectStage)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while listing users"})
+		}
+		log.Println(result)
+		var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		var allusers []bson.M
+		if err = result.All(ctx, &allusers); err != nil {
+			log.Fatal(err)
+		}
+		c.JSON(http.StatusOK, allusers[0])
 	}
 }

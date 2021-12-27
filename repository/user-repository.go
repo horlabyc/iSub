@@ -34,14 +34,14 @@ func CreateUser(user model.User) model.User {
 	return user
 }
 
-func FindOne(match bson.M) (model.User, error) {
+func FindOneUser(match bson.M) (model.User, error) {
 	var user model.User
-	var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return user, UserCollection.FindOne(ctx, match).Decode(&user)
 }
 
-func UpdateOne(filter bson.M, updateData primitive.D, options options.UpdateOptions) (*mongo.UpdateResult, error) {
+func UpdateOneUser(filter bson.M, updateData primitive.D, options options.UpdateOptions) (*mongo.UpdateResult, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	return UserCollection.UpdateOne(
@@ -60,8 +60,8 @@ func (repository UserRepository) Login() []model.User {
 	return allUsers
 }
 
-func (repository UserRepository) FindAll() []model.User {
-	var allUsers []model.User
-	repository.database.Find(&allUsers)
-	return allUsers
+func FindAllUsers(match primitive.D, group primitive.D, projectStage primitive.D) (*mongo.Cursor, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return UserCollection.Aggregate(ctx, mongo.Pipeline{match, group, projectStage})
 }

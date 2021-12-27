@@ -17,11 +17,11 @@ import (
 
 func RegisterUser(payload model.User) (model.User, error) {
 	var user = payload
-	var _, err = repository.FindOne(bson.M{"email": payload.Email})
+	var _, err = repository.FindOneUser(bson.M{"email": payload.Email})
 	if err != mongo.ErrNoDocuments {
 		return model.User{}, errors.New("user already exists")
 	}
-	_, err = repository.FindOne(bson.M{"username": payload.Username})
+	_, err = repository.FindOneUser(bson.M{"username": payload.Username})
 	if err != mongo.ErrNoDocuments {
 		return model.User{}, errors.New("user already exists")
 	}
@@ -42,7 +42,7 @@ func RegisterUser(payload model.User) (model.User, error) {
 }
 
 func LoginUser(payload model.User) (model.User, string, string, error) {
-	var existingUser, err = repository.FindOne(bson.M{"email": payload.Email})
+	var existingUser, err = repository.FindOneUser(bson.M{"email": payload.Email})
 	if err == mongo.ErrNoDocuments {
 		return model.User{}, "", "", errors.New("email or password is incorrect")
 	}
@@ -68,7 +68,7 @@ func UpdateUserTokens(signedToken string, signedRefreshToken string, userId stri
 		Upsert: &upsert,
 	}
 	filter := bson.M{"userid": userId}
-	_, err := repository.UpdateOne(filter, updateData, options)
+	_, err := repository.UpdateOneUser(filter, updateData, options)
 	if err != nil {
 		log.Panic(err)
 		return
