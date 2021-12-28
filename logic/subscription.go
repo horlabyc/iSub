@@ -18,6 +18,7 @@ import (
 const (
 	SUBSCRIPTION_STATUS_PENDING = "pending"
 	SUBSCRIPTION_STATUS_ACTIVE  = "active"
+	SUBSCRIPTION_STATUS_CANCEL  = "canceled"
 )
 
 func CreateSub(payload model.Subscription, userId string) model.Subscription {
@@ -79,6 +80,40 @@ func ActivateSub(userId string, subId string) (model.Subscription, error) {
 	if e != nil {
 		log.Panic(e)
 		return model.Subscription{}, errors.New("error occured while activating the subscription")
+	}
+	updatedSub, err := repository.FindOneSub(bson.M{"_id": subObjectId})
+	return updatedSub, nil
+}
+
+func CancelSub(userId string, subId string) (model.Subscription, error) {
+	var subObjectId, error = helper.ConvertToObjectId(subId)
+	if error != nil {
+		return model.Subscription{}, errors.New("Invalid subscription id provided")
+	}
+	var existingSub, err = repository.FindOneSub(bson.M{"_id": subObjectId})
+	if err == mongo.ErrNoDocuments {
+		return model.Subscription{}, errors.New("invalid subscription Id provided")
+	}
+	if existingSub.Status != SUBSCRIPTION_STATUS_ACTIVE {
+		return model.Subscription{}, errors.New("Subscription is not active")
+	}
+	var history = existingSub.History
+	history = append(history, model.SubscriptionHistory{
+		Description: "Cancel subscription",
+		Date:        time.Now().String(),
+	})
+	var updateData primitive.D
+	updateData = append(updateData, bson.E{"status", SUBSCRIPTION_STATUS_CANCEL})
+	updateData = append(updateData, bson.E{"history", history})
+	upsert := true
+	options := options.UpdateOptions{
+		Upsert: &upsert,
+	}
+	filter := bson.M{"_id": subObjectId}
+	_, e := repository.UpdateOneSub(filter, updateData, options)
+	if e != nil {
+		log.Panic(e)
+		return model.Subscription{}, errors.New("error occured while canceling the subscription")
 	}
 	updatedSub, err := repository.FindOneSub(bson.M{"_id": subObjectId})
 	return updatedSub, nil

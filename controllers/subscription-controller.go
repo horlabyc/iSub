@@ -47,3 +47,25 @@ func ActivateSubscription() gin.HandlerFunc {
 		})
 	}
 }
+
+func CancelSubscription() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId := c.GetString("userId")
+		subId := c.Param("subId")
+		if subId == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription id is required"})
+			c.Abort()
+			return
+		}
+		sub, error := logic.CancelSub(userId, subId)
+		if error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Subscription cancelled successfully",
+			"data":    sub,
+		})
+	}
+}
