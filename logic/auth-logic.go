@@ -67,7 +67,7 @@ func UpdateUserTokens(signedToken string, signedRefreshToken string, userId stri
 	options := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-	filter := bson.M{"userid": userId}
+	filter := bson.M{"userId": userId}
 	_, err := repository.UpdateOneUser(filter, updateData, options)
 	if err != nil {
 		log.Panic(err)

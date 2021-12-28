@@ -25,6 +25,7 @@ type Subscription struct {
 	Currency         string                `bson:"currency"`
 	UserId           string                `bson:"userId"`
 	History          []SubscriptionHistory `bson:"history"`
+	CreatedAt        string                `bson:"createdAt"`
 }
 
 type SubscriptionHistory struct {

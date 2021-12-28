@@ -101,3 +101,8 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 	}
 	return claims, msg
 }
+
+func ConvertToObjectId(str string) (primitive.ObjectID, error) {
+	oid, err := primitive.ObjectIDFromHex(str)
+	return oid, err
+}

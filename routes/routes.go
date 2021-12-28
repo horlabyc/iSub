@@ -28,4 +28,5 @@ func RegisterUserRoutes(router gin.IRouter) {
 func RegisterSubscriptionRoutes(router gin.IRouter) {
 	userRouter := router.Group("/subscriptions", middleware.Authenticate())
 	userRouter.POST("/create", middleware.CreateSubscriptionValidator(), controller.CreateSubscription())
+	userRouter.POST("/:subId/activate", controller.ActivateSubscription())
 }
