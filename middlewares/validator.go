@@ -20,6 +20,13 @@ type LoginCto struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type SubscriptionCto struct {
+	Name             string `bson:"name" validate:"required"`
+	SubscriptionType string `bson:"subscriptionType" validate:"required"` //daily, weekly, monthly, annually
+	Cost             string `bson:"cost" validate:"required"`
+	Currency         string `bson:"currency" validate:"required"`
+}
+
 func RegisterValidator() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var newUser SignupCto
@@ -41,13 +48,28 @@ func LoginValidator() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user LoginCto
 		if err := c.ShouldBindBodyWith(&user, binding.JSON); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		validationErr := validator.New().Struct(user)
 		if validationErr != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
+			return
+		}
+		c.Next()
+	}
+}
+
+func CreateSubscriptionValidator() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var subscription SubscriptionCto
+		if err := c.ShouldBindBodyWith(&subscription, binding.JSON); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		validationErr := validator.New().Struct(subscription)
+		if validationErr != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
 			return
 		}
 		c.Next()

@@ -13,16 +13,16 @@ func Authenticate() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		clientToken := authHeader[len(BEARER_SCHEMA)+1:]
 		if clientToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "No authorization header provided"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "No authorization header provided"})
+			return
 		}
 		claims, err := helper.ValidateToken(clientToken)
 		if err != "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authorized, bad/invalid token"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Not authorized, bad/invalid token"})
+			return
 		}
 		c.Set("email", claims.Email)
-		c.Set("userId", claims.UserId.String())
+		c.Set("userId", claims.UserId.Hex())
 		c.Set("username", claims.Username)
 		c.Next()
 	}

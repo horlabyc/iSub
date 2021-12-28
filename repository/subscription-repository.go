@@ -1,13 +1,19 @@
 package repository
 
-import "github.com/jinzhu/gorm"
+import (
+	"context"
+	"log"
 
-type SubscriptionRepository struct {
-	database *gorm.DB
-}
+	"github.com/horlabyc/iSub/database"
+	model "github.com/horlabyc/iSub/models"
+)
 
-func NewSubscriptionRepository(database *gorm.DB) *SubscriptionRepository {
-	return &SubscriptionRepository{
-		database: database,
+var SubscriptionCollection = database.OpenConnection(database.Client, "subscription")
+
+func CreateSubscription(sub model.Subscription) model.Subscription {
+	_, err := SubscriptionCollection.InsertOne(context.TODO(), sub)
+	if err != nil {
+		log.Fatal(err)
 	}
+	return sub
 }

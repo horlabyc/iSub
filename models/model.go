@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,13 +15,19 @@ type User struct {
 }
 
 type Subscription struct {
-	Id               primitive.ObjectID `bson:"_id"`
-	Name             string             `bson:"name" validate:"required"`
-	SubscriptionType string             `bson:"subscriptionType"`
-	Status           string             `bson:"status"`
-	LastRenewalDate  time.Time          `bson:"lastRenewalDate" validate:"required" `
-	NextRenewalDate  time.Time          `bson:nextRenewalDate validate:"required"`
-	Cost             string             `bson:"cost"`
-	Currency         string             `bson:"currency"`
-	UserID           primitive.ObjectID `bson:"_id"`
+	Id               primitive.ObjectID    `bson:"_id"`
+	Name             string                `bson:"name"`
+	SubscriptionType string                `bson:"subscriptionType"`
+	Status           string                `bson:"status"`
+	LastRenewalDate  string                `bson:"lastRenewalDate"`
+	NextRenewalDate  string                `bson:nextRenewalDate`
+	Cost             string                `bson:"cost"`
+	Currency         string                `bson:"currency"`
+	UserId           string                `bson:"userId"`
+	History          []SubscriptionHistory `bson:"history"`
+}
+
+type SubscriptionHistory struct {
+	Description string `bson:"description"`
+	Date        string `bson:"date"`
 }
