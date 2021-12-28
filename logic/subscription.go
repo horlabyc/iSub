@@ -118,3 +118,11 @@ func CancelSub(userId string, subId string) (model.Subscription, error) {
 	updatedSub, err := repository.FindOneSub(bson.M{"_id": subObjectId})
 	return updatedSub, nil
 }
+
+func GetSub(userId string, subId string) (model.Subscription, error) {
+	var subObjectId, error = helper.ConvertToObjectId(subId)
+	if error != nil {
+		return model.Subscription{}, errors.New("Invalid subscription id provided")
+	}
+	return repository.FindOneSub(bson.M{"userId": userId, "_id": subObjectId})
+}

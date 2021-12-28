@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	logic "github.com/horlabyc/iSub/logic"
 	model "github.com/horlabyc/iSub/models"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CreateSubscription() gin.HandlerFunc {
@@ -65,6 +66,35 @@ func CancelSubscription() gin.HandlerFunc {
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Subscription cancelled successfully",
+			"data":    sub,
+		})
+	}
+}
+
+func GetSubscription() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId := c.GetString("userId")
+		subId := c.Param("subId")
+		if subId == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription id is required"})
+			c.Abort()
+			return
+		}
+		sub, error := logic.GetSub(userId, subId)
+		if error == mongo.ErrNoDocuments {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Get Subscription",
+				"data":    map[string]interface{}{},
+			})
+			return
+		}
+		if error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": error.Error()})
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Get Subscription",
 			"data":    sub,
 		})
 	}
