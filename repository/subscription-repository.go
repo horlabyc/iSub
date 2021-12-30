@@ -42,3 +42,9 @@ func UpdateOneSub(filter bson.M, updateData primitive.D, options options.UpdateO
 		&options,
 	)
 }
+
+func FindAllSubs(match primitive.D, group primitive.D, projectStage primitive.D) (*mongo.Cursor, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return SubscriptionCollection.Aggregate(ctx, mongo.Pipeline{match, group, projectStage})
+}

@@ -1,6 +1,8 @@
 package logic
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -125,4 +127,29 @@ func GetSub(userId string, subId string) (model.Subscription, error) {
 		return model.Subscription{}, errors.New("Invalid subscription id provided")
 	}
 	return repository.FindOneSub(bson.M{"userId": userId, "_id": subObjectId})
+}
+
+func GetAllSub(page int, limit int, skip int, userId string) ([]bson.M, error) {
+	fmt.Println(page, skip, limit, userId)
+	match := bson.D{{"$match", bson.D{{"userId", userId}}}}
+	group := bson.D{{"$group", bson.D{
+		{"_id", bson.D{{"_id", "null"}}},
+		{"total", bson.D{{"$sum", 1}}},
+		{"data", bson.D{{"$push", "$$ROOT"}}},
+	}}}
+	projectStage := bson.D{
+		{"$project", bson.D{
+			{"_id", 0},
+			{"totalCount", 1},
+			{"subscriptions", bson.D{{"$slice", []interface{}{"$data", skip, limit}}}},
+		}},
+	}
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var allSubs []bson.M
+	result, err := repository.FindAllSubs(match, group, projectStage)
+	if err = result.All(ctx, &allSubs); err != nil {
+		return []bson.M{}, err
+	}
+	return allSubs, err
 }
